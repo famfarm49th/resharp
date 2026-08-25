@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Re-Sharp | สั่งลับมีด</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface-2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #e8c547;
+    --accent-dim: #c9a832;
+    --accent-glow: rgba(232, 197, 71, 0.15);
+    --text: #f0efe8;
+    --text-dim: #8a8880;
+    --danger: #e85747;
+    --success: #47e87a;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 16px 16px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  .logo span { color: var(--text-dim); font-weight: 500; font-size: 14px; display: block; letter-spacing: 4px; text-transform: uppercase; }
+
+  .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+
+  /* Steps indicator */
+  .steps {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .step-dot {
+    width: 32px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    transition: all 0.4s ease;
+  }
+
+  .step-dot.active { background: var(--accent); width: 48px; }
+  .step-dot.done { background: var(--accent-dim); }
+
+  /* Section cards */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .section.visible { display: block; animation: fadeSlide 0.3s ease; }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title .num {
+    background: var(--accent);
+    color: var(--bg);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  /* Knife items */
+  .knife-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .knife-item {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .knife-item:hover { border-color: var(--accent-dim); }
+
+  .knife-row { display: flex; gap: 12px; align-items: center; }
+
+  .knife-size-group { display: flex; gap: 6px; flex: 1; }
+
+  .size-btn {
+    flex: 1;
+    padding: 10px 4px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .size-btn.selected {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    color: var(--accent);
+  }
+
+  .size-btn .price {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .size-btn.selected .price { color: var(--accent-dim); }
+
+  .qty-control {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .qty-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .qty-btn:active { background: var(--accent-glow); }
+
+  .qty-val {
+    width: 32px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--accent);
+    background: var(--surface-2);
+  }
+
+  .remove-knife {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .remove-knife:hover { color: var(--danger); background: rgba(232, 87, 71, 0.1); }
+
+  .add-knife-btn {
+    width: 100%;
+    padding: 12px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+
+  .add-knife-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Zone selection */
+  .zone-cards { display: flex; gap: 10px; }
+
+  .zone-card {
+    flex: 1;
+    padding: 16px 12px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+  }
+
+  .zone-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .zone-card .zone-icon { font-size: 28px; margin-bottom: 8px; }
+  .zone-card .zone-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .zone-card .zone-desc { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+  .zone-card.selected .zone-desc { color: var(--accent-dim); }
+
+  /* Photo upload */
+  .photo-area {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .photo-area:hover { border-color: var(--accent-dim); }
+  .photo-area.has-photo { border-style: solid; border-color: var(--accent); padding: 0; }
+
+  .photo-area .icon { font-size: 36px; margin-bottom: 8px; }
+  .photo-area .label { font-size: 14px; color: var(--text-dim); }
+  .photo-area .sublabel { font-size: 12px; color: var(--text-dim); margin-top: 4px; opacity: 0.6; }
+
+  .photo-preview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    display: none;
+    border-radius: 10px;
+  }
+
+  .photo-area.has-photo .photo-preview { display: block; }
+  .photo-area.has-photo .icon,
+  .photo-area.has-photo .label,
+  .photo-area.has-photo .sublabel { display: none; }
+
+  .photo-change {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.7);
+    color: var(--accent);
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'Sarabun', sans-serif;
+    cursor: pointer;
+    display: none;
+  }
+
+  .photo-area.has-photo .photo-change { display: block; }
+
+  /* Contact form */
+  .form-group { margin-bottom: 14px; }
+
+  .form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--text-dim); opacity: 0.5; }
+
+  /* Address (Zone B) */
+  .address-section {
+    display: none;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .address-section.show { display: block; animation: fadeSlide 0.3s ease; }
+
+  /* Summary */
+  .summary-box {
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 14px;
+  }
+
+  .summary-row.total {
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+    padding-top: 12px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .summary-row.total .val { color: var(--accent); }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+
+  .btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-back {
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .btn-next {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .btn-next:active { transform: scale(0.98); }
+  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-submit {
+    background: var(--accent);
+    color: var(--bg);
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 20px;
+  }
+
+  .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Promo banner */
+  .promo-banner {
+    background: linear-gradient(135deg, rgba(232,197,71,0.15) 0%, rgba(232,87,71,0.08) 100%);
+    border: 1px solid var(--accent-dim);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: promoPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes promoPulse {
+    0%, 100% { border-color: var(--accent-dim); }
+    50% { border-color: var(--accent); box-shadow: 0 0 12px rgba(232,197,71,0.2); }
+  }
+
+  .promo-banner .promo-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.4;
+  }
+
+  .promo-banner .promo-sub {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-dim);
+  }
+
+  .promo-active {
+    background: linear-gradient(135deg, rgba(71,232,122,0.12) 0%, rgba(71,232,122,0.04) 100%);
+    border-color: var(--success);
+    animation: none;
+  }
+
+  .promo-active .promo-text { color: var(--success); }
+
+  .promo-progress {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+
+  .promo-progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .promo-active .promo-progress-bar { background: var(--success); }
+
+  /* Loading overlay */
+  .loading {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,10,0.9);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .loading.show { display: flex; }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text { color: var(--text-dim); font-size: 14px; }
+
+  /* Success screen */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .success-screen.show { display: block; }
+  .success-icon { font-size: 64px; margin-bottom: 16px; }
+  .success-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .success-msg { color: var(--text-dim); font-size: 14px; line-height: 1.6; }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 28px; }
+
+  .tl-item {
+    position: relative;
+    padding-bottom: 20px;
+  }
+
+  .tl-item:last-child { padding-bottom: 0; }
+
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 10px;
+    bottom: -10px;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .tl-item:last-child::before { display: none; }
+
+  .tl-dot {
+    position: absolute;
+    left: -24px;
+    top: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg);
+  }
+
+  .tl-dot.done {
+    background: var(--success);
+    border-color: var(--success);
+    box-shadow: 0 0 8px rgba(71,232,122,0.4);
+  }
+
+  .tl-dot.pending {
+    background: var(--surface);
+    border-color: var(--text-dim);
+  }
+
+  .tl-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .tl-desc { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+
+  .lang-toggle {
+    position: absolute;
+    top: 18px;
+    right: 14px;
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .lang-btn {
+    padding: 5px 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .lang-btn.on { background: var(--accent); color: var(--bg); }
+
+  .footer-note {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    opacity: 0.5;
+    padding: 20px 0 40px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="lang-toggle">
+    <button class="lang-btn" id="langTH" onclick="setLang('th')">ไทย</button>
+    <button class="lang-btn" id="langEN" onclick="setLang('en')">EN</button>
+  </div>
+  <div class="logo">RE-SHARP<span data-i18n="tagline">บริการลับมีดมืออาชีพ</span></div>
+</div>
+
+<div class="container">
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+    <div class="step-dot" id="dot4"></div>
+  </div>
+
+  <!-- STEP 1: Knife Selection -->
+  <div class="section visible" id="step1">
+    <div class="section-title"><span class="num">1</span> <span data-i18n="s1">เลือกมีดที่ต้องการลับ</span></div>
+    <div class="promo-banner" id="promoBanner">
+      <div style="flex:1">
+        <div class="promo-text" data-i18n="promoTitle">🔥 โปร 5 เล่ม 350 บาท ส่งฟรี!</div>
+        <div class="promo-sub" id="promoStatus">เพิ่มมีดอีก <span id="promoRemaining">5</span> เล่มเพื่อรับโปร</div>
+        <div class="promo-progress"><div class="promo-progress-bar" id="promoBar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="knife-list" id="knifeList">
+      <!-- Knife items inserted by JS -->
+    </div>
+    <button class="add-knife-btn" onclick="addKnife()" data-i18n="addKnife">+ เพิ่มมีดอีกเล่ม</button>
+    <div class="btn-row">
+      <button class="btn btn-next" id="btn1" onclick="goStep(2)" data-i18n="next">ถัดไป →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Zone + Photo -->
+  <div class="section" id="step2">
+    <div class="section-title"><span class="num">2</span> <span data-i18n="s2">เลือกโซนบริการ</span></div>
+    <div class="zone-cards">
+      <div class="zone-card" onclick="selectZone('A')" id="zoneA">
+        <div class="zone-icon">📍</div>
+        <div class="zone-name">Zone A</div>
+        <div class="zone-desc" data-i18n="zoneAdesc">รับ-ส่งในเถิน<br>ฟรีค่าจัดส่ง</div>
+      </div>
+      <div class="zone-card" onclick="selectZone('B')" id="zoneB">
+        <div class="zone-icon">📦</div>
+        <div class="zone-name">Zone B</div>
+        <div class="zone-desc" data-i18n="zoneBdesc">ส่งทั่วประเทศ<br>ผ่าน Kerry/Flash/J&T</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <div class="section-title" style="margin-bottom:12px"><span class="num">📷</span> <span data-i18n="photoTitle">ถ่ายรูปมีด</span></div>
+      <div class="photo-area" id="photoArea" onclick="document.getElementById('photoInput').click()">
+        <div class="icon">📸</div>
+        <div class="label" data-i18n="photoLabel">แตะเพื่อถ่ายรูปหรือเลือกจากแกลเลอรี</div>
+        <div class="sublabel" data-i18n="photoSub">เพื่อประเมินสภาพมีดก่อนลับ</div>
+        <img class="photo-preview" id="photoPreview">
+        <button class="photo-change" onclick="event.stopPropagation(); document.getElementById('photoInput').click()" data-i18n="changePhoto">เปลี่ยนรูป</button>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="goStep(1)" data-i18n="back">← กลับ</button>
+      <button class="btn btn-next" id="btn2" onclick="goStep(3)" data-i18n="next">ถัดไป →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Contact Info -->
+  <div class="section" id="step3">
+    <div class="section-title"><span class="num">3</span> <span data-i18n="s3">ข้อมูลผู้สั่ง</span></div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="fName">ชื่อ - นามสกุล</label>
+      <input class="form-input" id="custName" data-i18n-ph="phName" placeholder="เช่น สมชาย ใจดี">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="fPhone">เบอร์โทร</label>
+      <input class="form-input" id="custPhone" type="tel" placeholder="0812345678">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="fNote">หมายเหตุ (ถ้ามี)</label>
+      <input class="form-input" id="custNote" data-i18n-ph="phNote" placeholder="เช่น มีดญี่ปุ่น ต้องการลับแบบพิเศษ">
+    </div>
+
+    <div class="address-section" id="addressSection">
+      <div class="form-group">
+        <label class="form-label" data-i18n="fAddr">ที่อยู่จัดส่ง (Zone B)</label>
+        <textarea class="form-input" id="custAddress" rows="3" data-i18n-ph="phAddr" placeholder="บ้านเลขที่ ซอย ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์" style="resize:none"></textarea>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="goStep(2)" data-i18n="back">← กลับ</button>
+      <button class="btn btn-next" id="btn3" onclick="goStep(4)" data-i18n="review">ตรวจสอบ →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Summary -->
+  <div class="section" id="step4">
+    <div class="section-title"><span class="num">4</span> <span data-i18n="s4">สรุปคำสั่งลับมีด</span></div>
+    <div class="summary-box" id="summaryBox">
+      <!-- Filled by JS -->
+    </div>
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn btn-back" onclick="goStep(3)" data-i18n="edit">← แก้ไข</button>
+    </div>
+    <button class="btn-submit" id="submitBtn" onclick="submitOrder()" data-i18n="submit">✅ ยืนยันสั่งลับมีด</button>
+  </div>
+
+  <!-- Success -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">✅</div>
+    <div class="success-title" data-i18n="successTitle">สั่งลับมีดสำเร็จ!</div>
+    <div class="success-msg" id="successMsg"></div>
+
+    <!-- Shipping address card -->
+    <div id="shippingCard" style="display:none; background:var(--surface); border:1px solid var(--accent-dim); border-radius:12px; padding:18px; margin:20px 0; text-align:left;">
+      <div id="shipCardHead" style="font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:700; color:var(--accent); margin-bottom:10px; display:flex; align-items:center; gap:6px;">📦 กรุณาจัดส่งมีดมาที่</div>
+      <div style="background:var(--surface-2); border-radius:8px; padding:14px; font-size:15px; line-height:1.8;">
+        <strong style="color:var(--accent);">Re-Sharp</strong><br>
+        35 หมู่ 12 ต.ล้อมแรด<br>
+        อ.เถิน จ.ลำปาง 52160<br>
+        <span style="color:var(--text-dim); font-size:13px;" data-i18n="shopPhone">โทร: ใส่เบอร์ Re-Sharp</span>
+      </div>
+      <button onclick="copyAddress()" style="width:100%; margin-top:10px; padding:10px; background:var(--accent-glow); border:1px solid var(--accent-dim); border-radius:8px; color:var(--accent); font-family:'Sarabun',sans-serif; font-size:14px; font-weight:600; cursor:pointer;" id="copyBtn" data-i18n="copyAddr">📋 คัดลอกที่อยู่</button>
+    </div>
+
+    <!-- Status timeline -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; margin:16px 0; text-align:left;">
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:700; color:var(--text); margin-bottom:14px;" data-i18n="nextSteps">📋 ขั้นตอนถัดไป</div>
+      <div class="timeline">
+        <div class="tl-item active">
+          <div class="tl-dot done"></div>
+          <div class="tl-content">
+            <div class="tl-title" data-i18n="tl1t">ยืนยันคำสั่งแล้ว</div>
+            <div class="tl-desc" data-i18n="tl1d">ระบบบันทึกออเดอร์เรียบร้อย</div>
+          </div>
+        </div>
+        <div class="tl-item" id="tlShip">
+          <div class="tl-dot pending"></div>
+          <div class="tl-content">
+            <div class="tl-title" id="tlShipTitle">ส่งมีดมาให้เรา</div>
+            <div class="tl-desc" id="tlShipDesc">จัดส่งมีดมาตามที่อยู่ด้านบน</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot pending"></div>
+          <div class="tl-content">
+            <div class="tl-title" data-i18n="tl3t">🔔 แจ้งรับมีดเข้าระบบ</div>
+            <div class="tl-desc" data-i18n="tl3d">เราจะแจ้งเตือนทาง LINE เมื่อได้รับมีดแล้ว</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot pending"></div>
+          <div class="tl-content">
+            <div class="tl-title" data-i18n="tl4t">🔪 ลับมีด</div>
+            <div class="tl-desc" data-i18n="tl4d">ลับด้วย Tormek T-8 ระบบน้ำ คมกริบ!</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot pending"></div>
+          <div class="tl-content">
+            <div class="tl-title" data-i18n="tl5t">💰 แจ้งลับเสร็จ + ส่ง QR ชำระเงิน</div>
+            <div class="tl-desc" data-i18n="tl5d">เราส่ง PromptPay QR ให้ชำระค่าลับมีด</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot pending"></div>
+          <div class="tl-content">
+            <div class="tl-title" data-i18n="tl6t">🧾 ส่งสลิป → รับเลข Tracking</div>
+            <div class="tl-desc" data-i18n="tl6d">หลังชำระเงิน เราจัดส่งมีดคืนพร้อมเลข Tracking</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="if(typeof liff!=='undefined'&&liff.isInClient()){liff.closeWindow()}" style="width:100%; padding:14px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px; color:var(--text-dim); font-family:'Sarabun',sans-serif; font-size:15px; font-weight:600; cursor:pointer; margin-top:8px;" data-i18n="close">ปิดหน้านี้</button>
+  </div>
+
+  <div class="footer-note">Re-Sharp © 2026 | Tormek T-8 Professional Sharpening</div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" data-i18n="sending">กำลังส่งคำสั่ง...</div>
+</div>
+
+<!-- LIFF SDK -->
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<script>
+// ===== CONFIG =====
+const CONFIG = {
+  LIFF_ID: 'YOUR_LIFF_ID_HERE',           // ← ใส่ LIFF ID ตรงนี้
+  MAKE_WEBHOOK: 'YOUR_MAKE_WEBHOOK_URL',   // ← ใส่ Make.com Webhook URL ตรงนี้
+  PRICES: {
+    S: { label: 'เล็ก', label_en: 'Small', sublabel: '< 4 นิ้ว', sublabel_en: '< 4 in', price: 60 },
+    M: { label: 'กลาง', label_en: 'Medium', sublabel: '4-8 นิ้ว', sublabel_en: '4-8 in', price: 80 },
+    L: { label: 'ใหญ่', label_en: 'Large', sublabel: '> 8 นิ้ว', sublabel_en: '> 8 in', price: 120 }
+  },
+  PROMO: {
+    minQty: 5,
+    promoPrice: 350,
+    freeShipping: true,
+    label: '🔥 โปร 5 เล่ม 350 บาท ส่งฟรี!'
+  }
+};
+
+
+// ===== LANGUAGE =====
+const I18N = {
+  th: {
+    tagline:'บริการลับมีดมืออาชีพ', s1:'เลือกมีดที่ต้องการลับ', s2:'เลือกโซนบริการ',
+    s3:'ข้อมูลผู้สั่ง', s4:'สรุปคำสั่งลับมีด',
+    promoTitle:'🔥 โปร 5 เล่ม 350 บาท ส่งฟรี!', addKnife:'+ เพิ่มมีดอีกเล่ม',
+    next:'ถัดไป →', back:'← กลับ', review:'ตรวจสอบ →', edit:'← แก้ไข',
+    submit:'✅ ยืนยันสั่งลับมีด', sending:'กำลังส่งคำสั่ง...',
+    zoneAdesc:'รับ-ส่งในเถิน<br>ฟรีค่าจัดส่ง', zoneBdesc:'ส่งทั่วประเทศ<br>ผ่าน Kerry/Flash/J&T',
+    photoTitle:'ถ่ายรูปมีด', photoLabel:'แตะเพื่อถ่ายรูปหรือเลือกจากแกลเลอรี',
+    photoSub:'เพื่อประเมินสภาพมีดก่อนลับ', changePhoto:'เปลี่ยนรูป',
+    fName:'ชื่อ - นามสกุล', fPhone:'เบอร์โทร', fNote:'หมายเหตุ (ถ้ามี)', fAddr:'ที่อยู่จัดส่ง (Zone B)',
+    phName:'เช่น สมชาย ใจดี', phNote:'เช่น มีดญี่ปุ่น ต้องการลับแบบพิเศษ',
+    phAddr:'บ้านเลขที่ ซอย ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์',
+    successTitle:'สั่งลับมีดสำเร็จ!', nextSteps:'📋 ขั้นตอนถัดไป', close:'ปิดหน้านี้',
+    copyAddr:'📋 คัดลอกที่อยู่', copied:'✅ คัดลอกแล้ว!', shopPhone:'โทร: ใส่เบอร์ Re-Sharp',
+    shipHeadB:'📦 กรุณาจัดส่งมีดมาที่', shipHeadA:'📍 จุดรับ-ส่งมีด (Zone A เถิน)',
+    tl1t:'ยืนยันคำสั่งแล้ว', tl1d:'ระบบบันทึกออเดอร์เรียบร้อย',
+    tl3t:'🔔 แจ้งรับมีดเข้าระบบ', tl3d:'เราจะแจ้งเตือนทาง LINE เมื่อได้รับมีดแล้ว',
+    tl4t:'🔪 ลับมีด', tl4d:'ลับด้วย Tormek T-8 ระบบน้ำ คมกริบ!',
+    tl5t:'💰 แจ้งลับเสร็จ + ส่ง QR ชำระเงิน', tl5d:'เราส่ง PromptPay QR ให้ชำระค่าลับมีด',
+    tl6t:'🧾 ส่งสลิป → รับเลข Tracking', tl6d:'หลังชำระเงิน เราจัดส่งมีดคืนพร้อมเลข Tracking',
+    shipTitleB:'ส่งมีดมาให้เรา', shipDescB:'จัดส่งมีดมาตามที่อยู่ด้านบน (Kerry/Flash/J&T)',
+    shipTitleA:'นำมีดมาส่งที่ร้าน / นัดรับ', shipDescA:'นำมีดมาส่งที่ร้าน หรือนัดเวลารับ-ส่งในเถิน',
+    knifeNo:'มีดเล่มที่', addMore:'เพิ่มมีดอีก', toGetPromo:'เล่มเพื่อรับโปร',
+    gotPromo:'✅ ได้โปร', sets:'ชุด', blades:'เล่ม', andMore:'อีก', nextSet:'เล่มได้โปรชุดถัดไป',
+    freeShip:'+ ส่งฟรี!', promoRow:'🔥 โปร', outPromo:'เล่มนอกโปร', save:'ประหยัด',
+    zoneLbl:'โซน', zoneAsum:'A - รับส่งในเถิน', zoneBsum:'B - ส่งทั่วประเทศ',
+    freeShipRow:'✅ ส่งฟรี (โปร 5 เล่ม)', shipNote:'* ค่าส่งคิดตามจริง แจ้งหลังประเมิน',
+    nameLbl:'ชื่อ', phoneLbl:'เบอร์โทร', noteLbl:'หมายเหตุ', totalLbl:'รวมค่าลับมีด',
+    knifeWord:'มีด', totalWord:'รวม',
+    aSize:'กรุณาเลือกขนาดมีดทุกเล่ม', aZone:'กรุณาเลือกโซนบริการ',
+    aName:'กรุณากรอกชื่อ', aPhone:'กรุณากรอกเบอร์โทร', aAddr:'กรุณากรอกที่อยู่จัดส่ง',
+    aPhoto:'ไม่สามารถอ่านรูปนี้ได้ กรุณาลองรูปอื่น', aErr:'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'
+  },
+  en: {
+    tagline:'PROFESSIONAL KNIFE SHARPENING', s1:'Choose your knives', s2:'Choose service zone',
+    s3:'Your details', s4:'Order summary',
+    promoTitle:'🔥 DEAL: 5 blades for ฿350 + free shipping!', addKnife:'+ Add another knife',
+    next:'Next →', back:'← Back', review:'Review →', edit:'← Edit',
+    submit:'✅ Confirm order', sending:'Sending your order...',
+    zoneAdesc:'Pickup in Thoen<br>Free delivery', zoneBdesc:'Ships nationwide<br>Kerry/Flash/J&T',
+    photoTitle:'Photo of your knives', photoLabel:'Tap to take a photo or choose from gallery',
+    photoSub:'So we can assess condition before sharpening', changePhoto:'Change photo',
+    fName:'Full name', fPhone:'Phone number', fNote:'Notes (optional)', fAddr:'Shipping address (Zone B)',
+    phName:'e.g. John Smith', phNote:'e.g. Japanese knife, needs special angle',
+    phAddr:'House no., street, sub-district, district, province, postcode',
+    successTitle:'Order confirmed!', nextSteps:'📋 What happens next', close:'Close',
+    copyAddr:'📋 Copy address', copied:'✅ Copied!', shopPhone:'Tel: (Re-Sharp number)',
+    shipHeadB:'📦 Please send your knives to', shipHeadA:'📍 Pickup point (Zone A, Thoen)',
+    tl1t:'Order confirmed', tl1d:'Your order has been recorded',
+    tl3t:'🔔 Knives received', tl3d:'We will notify you on LINE when they arrive',
+    tl4t:'🔪 Sharpening', tl4d:'Sharpened on a Tormek T-8 water-cooled system',
+    tl5t:'💰 Done + payment QR sent', tl5d:'We send a PromptPay QR code for payment',
+    tl6t:'🧾 Send slip → get tracking', tl6d:'After payment we ship back with a tracking number',
+    shipTitleB:'Send your knives to us', shipDescB:'Ship to the address above (Kerry/Flash/J&T)',
+    shipTitleA:'Drop off or arrange pickup', shipDescA:'Bring them to the shop or arrange pickup in Thoen',
+    knifeNo:'Knife', addMore:'Add', toGetPromo:'more to unlock the deal',
+    gotPromo:'✅ Deal applied:', sets:'set(s)', blades:'blades', andMore:'', nextSet:'more for the next deal',
+    freeShip:'+ free shipping!', promoRow:'🔥 Deal', outPromo:'Extra blades ×', save:'You save',
+    zoneLbl:'Zone', zoneAsum:'A - Thoen pickup', zoneBsum:'B - Nationwide shipping',
+    freeShipRow:'✅ Free shipping (5-blade deal)', shipNote:'* Shipping charged at cost, quoted after assessment',
+    nameLbl:'Name', phoneLbl:'Phone', noteLbl:'Notes', totalLbl:'Total',
+    knifeWord:'Knives:', totalWord:'Total',
+    aSize:'Please choose a size for every knife', aZone:'Please choose a service zone',
+    aName:'Please enter your name', aPhone:'Please enter your phone number',
+    aAddr:'Please enter your shipping address',
+    aPhoto:'Could not read that image. Please try another one.',
+    aErr:'Something went wrong. Please try again.'
+  }
+};
+
+let lang = 'th';
+function t(k) { return (I18N[lang] && I18N[lang][k]) || I18N.th[k] || k; }
+function pLabel(size) { const p = CONFIG.PRICES[size]; return lang === 'en' ? p.label_en : p.label; }
+function pSub(size) { const p = CONFIG.PRICES[size]; return lang === 'en' ? p.sublabel_en : p.sublabel; }
+
+function setLang(l) {
+  lang = (l === 'en') ? 'en' : 'th';
+  try { localStorage.setItem('rs_lang', lang); } catch (e) {}
+  document.documentElement.lang = lang;
+  document.getElementById('langTH').classList.toggle('on', lang === 'th');
+  document.getElementById('langEN').classList.toggle('on', lang === 'en');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.innerHTML = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-ph'));
+  });
+  renderKnives();
+  updatePromo();
+  if (currentStep === 4) buildSummary();
+}
+
+function detectLang() {
+  let saved = null;
+  try { saved = localStorage.getItem('rs_lang'); } catch (e) {}
+  if (saved) return saved;
+  try {
+    if (typeof liff !== 'undefined' && liff.getLanguage) {
+      const l = liff.getLanguage() || '';
+      if (l.toLowerCase().indexOf('th') === 0) return 'th';
+      return 'en';
+    }
+  } catch (e) {}
+  const nav = (navigator.language || 'th').toLowerCase();
+  return nav.indexOf('th') === 0 ? 'th' : 'en';
+}
+
+let currentStep = 1;
+let selectedZone = null;
+let photoBase64 = null;
+let lineProfile = null;
+let knives = [{ id: 1, size: null, qty: 1 }];
+let nextKnifeId = 2;
+
+// ===== LIFF INIT =====
+async function initLiff() {
+  try {
+    await liff.init({ liffId: CONFIG.LIFF_ID });
+    if (liff.isLoggedIn()) {
+      lineProfile = await liff.getProfile();
+    }
+  } catch (e) {
+    console.log('LIFF init skipped (dev mode):', e.message);
+  }
+  setLang(detectLang());
+}
+initLiff();
+
+// ===== KNIFE MANAGEMENT =====
+function renderKnives() {
+  const list = document.getElementById('knifeList');
+  list.innerHTML = knives.map((k, idx) => `
+    <div class="knife-item" data-id="${k.id}">
+      ${knives.length > 1 ? `<button class="remove-knife" onclick="removeKnife(${k.id})">✕</button>` : ''}
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;font-weight:600">${t('knifeNo')} ${idx + 1}</div>
+      <div class="knife-row">
+        <div class="knife-size-group">
+          ${Object.entries(CONFIG.PRICES).map(([key, v]) => `
+            <button class="size-btn ${k.size === key ? 'selected' : ''}" onclick="setSize(${k.id}, '${key}')">
+              ${pLabel(key)}<span class="price">${pSub(key)}<br>฿${v.price}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty(${k.id}, -1)">−</button>
+          <span class="qty-val">${k.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${k.id}, 1)">+</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addKnife() {
+  knives.push({ id: nextKnifeId++, size: null, qty: 1 });
+  renderKnives();
+  updatePromo();
+}
+
+function removeKnife(id) {
+  knives = knives.filter(k => k.id !== id);
+  renderKnives();
+  updatePromo();
+}
+
+function setSize(id, size) {
+  knives.find(k => k.id === id).size = size;
+  renderKnives();
+  updatePromo();
+}
+
+function changeQty(id, delta) {
+  const k = knives.find(k => k.id === id);
+  k.qty = Math.max(1, Math.min(20, k.qty + delta));
+  renderKnives();
+  updatePromo();
+}
+
+// ===== PROMO LOGIC =====
+function getTotalKnives() {
+  return knives.reduce((sum, k) => sum + k.qty, 0);
+}
+
+function calcPrice() {
+  const totalQty = getTotalKnives();
+  const promo = CONFIG.PROMO;
+  
+  if (totalQty >= promo.minQty) {
+    // โปร: ทุก 5 เล่ม = 350 บาท, เล่มที่เกินคิดตามขนาด
+    const promoSets = Math.floor(totalQty / promo.minQty);
+    const remainQty = totalQty % promo.minQty;
+    const promoTotal = promoSets * promo.promoPrice;
+    
+    // เล่มที่เกินโปร — คิดตามราคาปกติ (เรียงจากถูกสุดก่อน)
+    let remainTotal = 0;
+    if (remainQty > 0) {
+      const allPrices = [];
+      knives.forEach(k => {
+        if (k.size) {
+          for (let i = 0; i < k.qty; i++) {
+            allPrices.push(CONFIG.PRICES[k.size].price);
+          }
+        }
+      });
+      allPrices.sort((a, b) => a - b); // ถูกสุดก่อน
+      // เล่มในโปรใช้ราคาถูก, เล่มเหลือใช้ราคาแพง
+      const remainPrices = allPrices.slice(promoSets * promo.minQty);
+      remainTotal = remainPrices.reduce((s, p) => s + p, 0);
+    }
+    
+    return { total: promoTotal + remainTotal, isPromo: true, promoSets, remainQty, freeShipping: promo.freeShipping };
+  } else {
+    // ราคาปกติ
+    let total = 0;
+    knives.forEach(k => {
+      if (k.size) total += CONFIG.PRICES[k.size].price * k.qty;
+    });
+    return { total, isPromo: false, promoSets: 0, remainQty: totalQty, freeShipping: false };
+  }
+}
+
+function updatePromo() {
+  const totalQty = getTotalKnives();
+  const promo = CONFIG.PROMO;
+  const banner = document.getElementById('promoBanner');
+  const remaining = promo.minQty - (totalQty % promo.minQty || promo.minQty);
+  const isActive = totalQty >= promo.minQty;
+  const pct = Math.min(100, (totalQty / promo.minQty) * 100);
+
+  banner.classList.toggle('promo-active', isActive);
+  document.getElementById('promoBar').style.width = pct + '%';
+
+  if (isActive) {
+    const sets = Math.floor(totalQty / promo.minQty);
+    const rem = totalQty % promo.minQty;
+    let msg = `${t('gotPromo')} ${sets} ${t('sets')} (${sets * promo.minQty} ${t('blades')} = ฿${sets * promo.promoPrice}) ${t('freeShip')}`;
+    if (rem > 0) msg += `<br>${t('andMore')} ${promo.minQty - rem} ${t('nextSet')}`;
+    document.getElementById('promoStatus').innerHTML = msg;
+  } else {
+    document.getElementById('promoStatus').innerHTML = `${t('addMore')} <strong>${promo.minQty - totalQty}</strong> ${t('toGetPromo')}`;
+  }
+}
+
+// Initial render
+setLang(detectLang());
+renderKnives();
+
+// ===== ZONE =====
+function selectZone(zone) {
+  selectedZone = zone;
+  document.getElementById('zoneA').classList.toggle('selected', zone === 'A');
+  document.getElementById('zoneB').classList.toggle('selected', zone === 'B');
+  document.getElementById('addressSection').classList.toggle('show', zone === 'B');
+}
+
+// ===== PHOTO (shrunk before sending — a raw phone photo is too big for the webhook) =====
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1000;
+        let w = img.width, h = img.height;
+        if (w > h && w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        else if (h >= w && h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        photoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+        document.getElementById('photoPreview').src = photoBase64;
+        document.getElementById('photoArea').classList.add('has-photo');
+      };
+      img.onerror = () => alert(t('aPhoto'));
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// ===== NAVIGATION =====
+function goStep(step) {
+  // Validation
+  if (step === 2 && currentStep === 1) {
+    const allSized = knives.every(k => k.size !== null);
+    if (!allSized) { alert(t('aSize')); return; }
+  }
+  if (step === 3 && currentStep === 2) {
+    if (!selectedZone) { alert(t('aZone')); return; }
+  }
+  if (step === 4 && currentStep === 3) {
+    if (!document.getElementById('custName').value.trim()) { alert(t('aName')); return; }
+    if (!document.getElementById('custPhone').value.trim()) { alert(t('aPhone')); return; }
+    if (selectedZone === 'B' && !document.getElementById('custAddress').value.trim()) { alert(t('aAddr')); return; }
+    buildSummary();
+  }
+
+  currentStep = step;
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`step${i}`).classList.toggle('visible', i === step);
+    const dot = document.getElementById(`dot${i}`);
+    dot.classList.toggle('active', i === step);
+    dot.classList.toggle('done', i < step);
+  }
+}
+
+// ===== SUMMARY =====
+function buildSummary() {
+  let html = '';
+
+  // รายการมีดแต่ละเล่ม (ราคาปกติ)
+  let normalTotal = 0;
+  knives.forEach((k, idx) => {
+    const p = CONFIG.PRICES[k.size];
+    const subtotal = p.price * k.qty;
+    normalTotal += subtotal;
+    html += `<div class="summary-row">
+      <span>${pLabel(k.size)} (${pSub(k.size)}) × ${k.qty}</span>
+      <span>฿${subtotal}</span>
+    </div>`;
+  });
+
+  // คำนวณโปร
+  const pricing = calcPrice();
+  
+  if (pricing.isPromo) {
+    html += `<div class="summary-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+      <span style="color:var(--success);font-weight:700">${t('promoRow')} ${pricing.promoSets} ${t('sets')} (${pricing.promoSets * CONFIG.PROMO.minQty} ${t('blades')})</span>
+      <span style="color:var(--success)">฿${pricing.promoSets * CONFIG.PROMO.promoPrice}</span>
+    </div>`;
+    if (pricing.remainQty > 0) {
+      html += `<div class="summary-row"><span style="color:var(--text-dim)">${t('outPromo')} ${pricing.remainQty}</span><span>฿${pricing.total - (pricing.promoSets * CONFIG.PROMO.promoPrice)}</span></div>`;
+    }
+    if (normalTotal > pricing.total) {
+      html += `<div class="summary-row"><span style="color:var(--danger);font-size:12px">${t('save')} ฿${normalTotal - pricing.total}!</span><span style="text-decoration:line-through;color:var(--text-dim)">฿${normalTotal}</span></div>`;
+    }
+  }
+
+  html += `<div class="summary-row"><span>${t('zoneLbl')}</span><span>${selectedZone === 'A' ? t('zoneAsum') : t('zoneBsum')}</span></div>`;
+  if (selectedZone === 'B' && pricing.freeShipping) {
+    html += `<div class="summary-row"><span style="color:var(--success);font-size:13px">${t('freeShipRow')}</span><span style="color:var(--success)">฿0</span></div>`;
+  } else if (selectedZone === 'B') {
+    html += `<div class="summary-row"><span style="color:var(--text-dim);font-size:12px">${t('shipNote')}</span><span></span></div>`;
+  }
+  html += `<div class="summary-row"><span>${t('nameLbl')}</span><span>${document.getElementById('custName').value}</span></div>`;
+  html += `<div class="summary-row"><span>${t('phoneLbl')}</span><span>${document.getElementById('custPhone').value}</span></div>`;
+  if (document.getElementById('custNote').value.trim()) {
+    html += `<div class="summary-row"><span>${t('noteLbl')}</span><span>${document.getElementById('custNote').value}</span></div>`;
+  }
+  html += `<div class="summary-row total"><span>${t('totalLbl')}</span><span class="val">฿${pricing.total}</span></div>`;
+
+  document.getElementById('summaryBox').innerHTML = html;
+}
+
+// ===== SUBMIT =====
+async function submitOrder() {
+  if (CONFIG.MAKE_WEBHOOK.indexOf('http') !== 0) {
+    alert('ยังไม่ได้ตั้งค่า MAKE_WEBHOOK ในไฟล์ / MAKE_WEBHOOK is not set in the file yet');
+    return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  document.getElementById('loadingOverlay').classList.add('show');
+
+  let total = 0;
+  const knifeData = knives.map((k, idx) => {
+    const p = CONFIG.PRICES[k.size];
+    const subtotal = p.price * k.qty;
+    total += subtotal;
+    return {
+      item: idx + 1,
+      size: k.size,
+      size_label: p.label,
+      qty: k.qty,
+      unit_price: p.price,
+      subtotal: subtotal
+    };
+  });
+
+  const pricing = calcPrice();
+
+  const payload = {
+    order_id: 'RS-' + Date.now(),
+    timestamp: new Date().toISOString(),
+    line_user_id: lineProfile?.userId || 'unknown',
+    line_display_name: lineProfile?.displayName || 'Guest',
+    customer_name: document.getElementById('custName').value.trim(),
+    customer_phone: document.getElementById('custPhone').value.trim(),
+    customer_note: document.getElementById('custNote').value.trim(),
+    zone: selectedZone,
+    address: selectedZone === 'B' ? document.getElementById('custAddress').value.trim() : '',
+    knives: knifeData,
+    knives_text: knifeData.map(k => k.size_label + '×' + k.qty).join(', '),
+    total_knives: knifeData.reduce((sum, k) => sum + k.qty, 0),
+    normal_price: total,
+    total_price: pricing.total,
+    discount: total - pricing.total,
+    is_promo: pricing.isPromo,
+    promo_sets: pricing.promoSets,
+    free_shipping: pricing.freeShipping,
+    photo: photoBase64 || null,
+    lang: lang
+  };
+
+  try {
+    const res = await fetch(CONFIG.MAKE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    document.getElementById('loadingOverlay').classList.remove('show');
+
+    if (res.ok) {
+      // Hide form, show success
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+      document.querySelector('.steps').style.display = 'none';
+      document.getElementById('successScreen').classList.add('show');
+      document.getElementById('successMsg').innerHTML = `
+        Order: <strong>${payload.order_id}</strong><br>
+        ${t('knifeWord')} ${payload.total_knives} ${lang === 'th' ? 'เล่ม' : ''} | ${t('totalWord')} ฿${pricing.total}
+        ${pricing.isPromo ? '<br><span style="color:#47e87a">' + t('promoRow') + ' ' + pricing.promoSets + ' ' + t('sets') + ' · ' + t('save') + ' ฿' + payload.discount + (pricing.freeShipping ? ' ' + t('freeShip') : '') + '</span>' : ''}
+      `;
+
+      // Show shipping card based on zone
+      const shipCard = document.getElementById('shippingCard');
+      const tlShip = document.getElementById('tlShip');
+      if (payload.zone === 'B') {
+        shipCard.style.display = 'block';
+        document.getElementById('shipCardHead').textContent = t('shipHeadB');
+        document.getElementById('tlShipTitle').textContent = t('shipTitleB');
+        document.getElementById('tlShipDesc').textContent = t('shipDescB');
+      } else {
+        // Zone A — pickup
+        shipCard.style.display = 'block';
+        document.getElementById('shipCardHead').textContent = t('shipHeadA');
+        document.getElementById('tlShipTitle').textContent = t('shipTitleA');
+        document.getElementById('tlShipDesc').textContent = t('shipDescA');
+      }
+
+      // Don't auto-close — let customer read the address and timeline
+
+    } else {
+      throw new Error('Server error');
+    }
+  } catch (err) {
+    document.getElementById('loadingOverlay').classList.remove('show');
+    alert(t('aErr'));
+    btn.disabled = false;
+  }
+}
+
+// ===== COPY ADDRESS =====
+function copyAddress() {
+  const addr = 'Re-Sharp\n35 หมู่ 12 ต.ล้อมแรด\nอ.เถิน จ.ลำปาง 52160';
+  navigator.clipboard.writeText(addr).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = t('copied');
+    btn.style.borderColor = '#47e87a';
+    btn.style.color = '#47e87a';
+    setTimeout(() => {
+      btn.textContent = t('copyAddr');
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }, 2000);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = addr;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    document.getElementById('copyBtn').textContent = t('copied');
+  });
+}
+</script>
+</body>
+</html>
