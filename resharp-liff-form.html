@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Re-Sharp | สั่งลับมีด</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface-2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #e8c547;
+    --accent-dim: #c9a832;
+    --accent-glow: rgba(232, 197, 71, 0.15);
+    --text: #f0efe8;
+    --text-dim: #8a8880;
+    --danger: #e85747;
+    --success: #47e87a;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 16px 16px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  .logo span { color: var(--text-dim); font-weight: 500; font-size: 14px; display: block; letter-spacing: 4px; text-transform: uppercase; }
+
+  .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+
+  /* Steps indicator */
+  .steps {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .step-dot {
+    width: 32px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    transition: all 0.4s ease;
+  }
+
+  .step-dot.active { background: var(--accent); width: 48px; }
+  .step-dot.done { background: var(--accent-dim); }
+
+  /* Section cards */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .section.visible { display: block; animation: fadeSlide 0.3s ease; }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title .num {
+    background: var(--accent);
+    color: var(--bg);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  /* Knife items */
+  .knife-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .knife-item {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .knife-item:hover { border-color: var(--accent-dim); }
+
+  .knife-row { display: flex; gap: 12px; align-items: center; }
+
+  .knife-size-group { display: flex; gap: 6px; flex: 1; }
+
+  .size-btn {
+    flex: 1;
+    padding: 10px 4px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .size-btn.selected {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    color: var(--accent);
+  }
+
+  .size-btn .price {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .size-btn.selected .price { color: var(--accent-dim); }
+
+  .qty-control {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .qty-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .qty-btn:active { background: var(--accent-glow); }
+
+  .qty-val {
+    width: 32px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--accent);
+    background: var(--surface-2);
+  }
+
+  .remove-knife {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .remove-knife:hover { color: var(--danger); background: rgba(232, 87, 71, 0.1); }
+
+  .add-knife-btn {
+    width: 100%;
+    padding: 12px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+
+  .add-knife-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Zone selection */
+  .zone-cards { display: flex; gap: 10px; }
+
+  .zone-card {
+    flex: 1;
+    padding: 16px 12px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+  }
+
+  .zone-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .zone-card .zone-icon { font-size: 28px; margin-bottom: 8px; }
+  .zone-card .zone-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .zone-card .zone-desc { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+  .zone-card.selected .zone-desc { color: var(--accent-dim); }
+
+  /* Photo upload */
+  .photo-area {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .photo-area:hover { border-color: var(--accent-dim); }
+  .photo-area.has-photo { border-style: solid; border-color: var(--accent); padding: 0; }
+
+  .photo-area .icon { font-size: 36px; margin-bottom: 8px; }
+  .photo-area .label { font-size: 14px; color: var(--text-dim); }
+  .photo-area .sublabel { font-size: 12px; color: var(--text-dim); margin-top: 4px; opacity: 0.6; }
+
+  .photo-preview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    display: none;
+    border-radius: 10px;
+  }
+
+  .photo-area.has-photo .photo-preview { display: block; }
+  .photo-area.has-photo .icon,
+  .photo-area.has-photo .label,
+  .photo-area.has-photo .sublabel { display: none; }
+
+  .photo-change {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.7);
+    color: var(--accent);
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'Sarabun', sans-serif;
+    cursor: pointer;
+    display: none;
+  }
+
+  .photo-area.has-photo .photo-change { display: block; }
+
+  /* Contact form */
+  .form-group { margin-bottom: 14px; }
+
+  .form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--text-dim); opacity: 0.5; }
+
+  /* Address (Zone B) */
+  .address-section {
+    display: none;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .address-section.show { display: block; animation: fadeSlide 0.3s ease; }
+
+  /* Summary */
+  .summary-box {
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 14px;
+  }
+
+  .summary-row.total {
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+    padding-top: 12px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .summary-row.total .val { color: var(--accent); }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+
+  .btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-back {
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .btn-next {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .btn-next:active { transform: scale(0.98); }
+  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-submit {
+    background: var(--accent);
+    color: var(--bg);
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 20px;
+  }
+
+  .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Promo banner */
+  .promo-banner {
+    background: linear-gradient(135deg, rgba(232,197,71,0.15) 0%, rgba(232,87,71,0.08) 100%);
+    border: 1px solid var(--accent-dim);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: promoPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes promoPulse {
+    0%, 100% { border-color: var(--accent-dim); }
+    50% { border-color: var(--accent); box-shadow: 0 0 12px rgba(232,197,71,0.2); }
+  }
+
+  .promo-banner .promo-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.4;
+  }
+
+  .promo-banner .promo-sub {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-dim);
+  }
+
+  .promo-active {
+    background: linear-gradient(135deg, rgba(71,232,122,0.12) 0%, rgba(71,232,122,0.04) 100%);
+    border-color: var(--success);
+    animation: none;
+  }
+
+  .promo-active .promo-text { color: var(--success); }
+
+  .promo-progress {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+
+  .promo-progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .promo-active .promo-progress-bar { background: var(--success); }
+
+  /* Loading overlay */
+  .loading {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,10,0.9);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .loading.show { display: flex; }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text { color: var(--text-dim); font-size: 14px; }
+
+  /* Success screen */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .success-screen.show { display: block; }
+  .success-icon { font-size: 64px; margin-bottom: 16px; }
+  .success-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .success-msg { color: var(--text-dim); font-size: 14px; line-height: 1.6; }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 28px; }
+
+  .tl-item {
+    position: relative;
+    padding-bottom: 20px;
+  }
+
+  .tl-item:last-child { padding-bottom: 0; }
+
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 10px;
+    bottom: -10px;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .tl-item:last-child::before { display: none; }
+
+  .tl-dot {
+    position: absolute;
+    left: -24px;
+    top: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg);
+  }
+
+  .tl-dot.done {
+    background: var(--success);
+    border-color: var(--success);
+    box-shadow: 0 0 8px rgba(71,232,122,0.4);
+  }
+
+  .tl-dot.pending {
+    background: var(--surface);
+    border-color: var(--text-dim);
+  }
+
+  .tl-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .tl-desc { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+
+  .footer-note {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    opacity: 0.5;
+    padding: 20px 0 40px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">RE-SHARP<span>บริการลับมีดมืออาชีพ</span></div>
+</div>
+
+<div class="container">
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+    <div class="step-dot" id="dot4"></div>
+  </div>
+
+  <!-- STEP 1: Knife Selection -->
+  <div class="section visible" id="step1">
+    <div class="section-title"><span class="num">1</span> เลือกมีดที่ต้องการลับ</div>
+    <div class="promo-banner" id="promoBanner">
+      <div style="flex:1">
+        <div class="promo-text">🔥 โปร 5 เล่ม 350 บาท ส่งฟรี!</div>
+        <div class="promo-sub" id="promoStatus">เพิ่มมีดอีก <span id="promoRemaining">5</span> เล่มเพื่อรับโปร</div>
+        <div class="promo-progress"><div class="promo-progress-bar" id="promoBar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="knife-list" id="knifeList">
+      <!-- Knife items inserted by JS -->
+    </div>
+    <button class="add-knife-btn" onclick="addKnife()">+ เพิ่มมีดอีกเล่ม</button>
+    <div class="btn-row">
+      <button class="btn btn-next" id="btn1" onclick="goStep(2)">ถัดไป →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Zone + Photo -->
+  <div class="section" id="step2">
+    <div class="section-title"><span class="num">2</span> เลือกโซนบริการ</div>
+    <div class="zone-cards">
+      <div class="zone-card" onclick="selectZone('A')" id="zoneA">
+        <div class="zone-icon">📍</div>
+        <div class="zone-name">Zone A</div>
+        <div class="zone-desc">รับ-ส่งในเถิน<br>ฟรีค่าจัดส่ง</div>
+      </div>
+      <div class="zone-card" onclick="selectZone('B')" id="zoneB">
+        <div class="zone-icon">📦</div>
+        <div class="zone-name">Zone B</div>
+        <div class="zone-desc">ส่งทั่วประเทศ<br>ผ่าน Kerry/Flash/J&T</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <div class="section-title" style="margin-bottom:12px"><span class="num">📷</span> ถ่ายรูปมีด</div>
+      <div class="photo-area" id="photoArea" onclick="document.getElementById('photoInput').click()">
+        <div class="icon">📸</div>
+        <div class="label">แตะเพื่อถ่ายรูปหรือเลือกจากแกลเลอรี</div>
+        <div class="sublabel">เพื่อประเมินสภาพมีดก่อนลับ</div>
+        <img class="photo-preview" id="photoPreview">
+        <button class="photo-change" onclick="event.stopPropagation(); document.getElementById('photoInput').click()">เปลี่ยนรูป</button>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="goStep(1)">← กลับ</button>
+      <button class="btn btn-next" id="btn2" onclick="goStep(3)">ถัดไป →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Contact Info -->
+  <div class="section" id="step3">
+    <div class="section-title"><span class="num">3</span> ข้อมูลผู้สั่ง</div>
+    <div class="form-group">
+      <label class="form-label">ชื่อ - นามสกุล</label>
+      <input class="form-input" id="custName" placeholder="เช่น สมชาย ใจดี">
+    </div>
+    <div class="form-group">
+      <label class="form-label">เบอร์โทร</label>
+      <input class="form-input" id="custPhone" type="tel" placeholder="0812345678">
+    </div>
+    <div class="form-group">
+      <label class="form-label">หมายเหตุ (ถ้ามี)</label>
+      <input class="form-input" id="custNote" placeholder="เช่น มีดญี่ปุ่น ต้องการลับแบบพิเศษ">
+    </div>
+
+    <div class="address-section" id="addressSection">
+      <div class="form-group">
+        <label class="form-label">ที่อยู่จัดส่ง (Zone B)</label>
+        <textarea class="form-input" id="custAddress" rows="3" placeholder="บ้านเลขที่ ซอย ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์" style="resize:none"></textarea>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="goStep(2)">← กลับ</button>
+      <button class="btn btn-next" id="btn3" onclick="goStep(4)">ตรวจสอบ →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Summary -->
+  <div class="section" id="step4">
+    <div class="section-title"><span class="num">4</span> สรุปคำสั่งลับมีด</div>
+    <div class="summary-box" id="summaryBox">
+      <!-- Filled by JS -->
+    </div>
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn btn-back" onclick="goStep(3)">← แก้ไข</button>
+    </div>
+    <button class="btn-submit" id="submitBtn" onclick="submitOrder()">✅ ยืนยันสั่งลับมีด</button>
+  </div>
+
+  <!-- Success -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">✅</div>
+    <div class="success-title">สั่งลับมีดสำเร็จ!</div>
+    <div class="success-msg" id="successMsg"></div>
+
+    <!-- Shipping address card -->
+    <div id="shippingCard" style="display:none; background:var(--surface); border:1px solid var(--accent-dim); border-radius:12px; padding:18px; margin:20px 0; text-align:left;">
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:700; color:var(--accent); margin-bottom:10px; display:flex; align-items:center; gap:6px;">📦 กรุณาจัดส่งมีดมาที่</div>
+      <div style="background:var(--surface-2); border-radius:8px; padding:14px; font-size:15px; line-height:1.8;">
+        <strong style="color:var(--accent);">Re-Sharp</strong><br>
+        35 หมู่ 12 ต.ล้อมแรด<br>
+        อ.เถิน จ.ลำปาง 52160<br>
+        <span style="color:var(--text-dim); font-size:13px;">โทร: ใส่เบอร์ Re-Sharp</span>
+      </div>
+      <button onclick="copyAddress()" style="width:100%; margin-top:10px; padding:10px; background:var(--accent-glow); border:1px solid var(--accent-dim); border-radius:8px; color:var(--accent); font-family:'Sarabun',sans-serif; font-size:14px; font-weight:600; cursor:pointer;" id="copyBtn">📋 คัดลอกที่อยู่</button>
+    </div>
+
+    <!-- Status timeline -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; margin:16px 0; text-align:left;">
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:700; color:var(--text); margin-bottom:14px;">📋 ขั้นตอนถัดไป</div>
+      <div class="timeline">
+        <div class="tl-item active">
+          <div class="tl-dot done"></div>
+          <div class="tl-content">
+            <div class="tl-title">ยืนยันคำสั่งแล้ว</div>
+            <div class="tl-desc">ระบบบันทึกออเดอร์เรียบร้อย</div>
+          </div>
+        </div>
+        <div class="tl-item" id="tlShip">
+          <div class="tl-dot pending"></div>
+          <div class="tl-content">
+            <div class="tl-title" id="tlShipTitle">ส่งมีดมาให้เรา</div>
+            <div class="tl-desc" id="tlShipDesc">จัดส่งมีดมาตามที่อยู่ด้านบน</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot pending"></div>
+          <div class="tl-content">
+            <div class="tl-title">🔔 แจ้งรับมีดเข้าระบบ</div>
+            <div class="tl-desc">เราจะแจ้งเตือนทาง LINE เมื่อได้รับมีดแล้ว</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot pending"></div>
+          <div class="tl-content">
+            <div class="tl-title">🔪 ลับมีด</div>
+            <div class="tl-desc">ลับด้วย Tormek T-8 ระบบน้ำ คมกริบ!</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot pending"></div>
+          <div class="tl-content">
+            <div class="tl-title">💰 แจ้งลับเสร็จ + ส่ง QR ชำระเงิน</div>
+            <div class="tl-desc">เราส่ง PromptPay QR ให้ชำระค่าลับมีด</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot pending"></div>
+          <div class="tl-content">
+            <div class="tl-title">🧾 ส่งสลิป → รับเลข Tracking</div>
+            <div class="tl-desc">หลังชำระเงิน เราจัดส่งมีดคืนพร้อมเลข Tracking</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="if(typeof liff!=='undefined'&&liff.isInClient()){liff.closeWindow()}" style="width:100%; padding:14px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px; color:var(--text-dim); font-family:'Sarabun',sans-serif; font-size:15px; font-weight:600; cursor:pointer; margin-top:8px;">ปิดหน้านี้</button>
+  </div>
+
+  <div class="footer-note">Re-Sharp © 2026 | Tormek T-8 Professional Sharpening</div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">กำลังส่งคำสั่ง...</div>
+</div>
+
+<!-- LIFF SDK -->
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<script>
+// ===== CONFIG =====
+const CONFIG = {
+  LIFF_ID: 'YOUR_LIFF_ID_HERE',           // ← ใส่ LIFF ID ตรงนี้
+  MAKE_WEBHOOK: 'YOUR_MAKE_WEBHOOK_URL',   // ← ใส่ Make.com Webhook URL ตรงนี้
+  PRICES: {
+    S: { label: 'เล็ก', sublabel: '< 4 นิ้ว', price: 60 },
+    M: { label: 'กลาง', sublabel: '4-8 นิ้ว', price: 80 },
+    L: { label: 'ใหญ่', sublabel: '> 8 นิ้ว', price: 120 }
+  },
+  PROMO: {
+    minQty: 5,
+    promoPrice: 350,
+    freeShipping: true,
+    label: '🔥 โปร 5 เล่ม 350 บาท ส่งฟรี!'
+  }
+};
+
+let currentStep = 1;
+let selectedZone = null;
+let photoBase64 = null;
+let lineProfile = null;
+let knives = [{ id: 1, size: null, qty: 1 }];
+let nextKnifeId = 2;
+
+// ===== LIFF INIT =====
+async function initLiff() {
+  try {
+    await liff.init({ liffId: CONFIG.LIFF_ID });
+    if (liff.isLoggedIn()) {
+      lineProfile = await liff.getProfile();
+    }
+  } catch (e) {
+    console.log('LIFF init skipped (dev mode):', e.message);
+  }
+}
+initLiff();
+
+// ===== KNIFE MANAGEMENT =====
+function renderKnives() {
+  const list = document.getElementById('knifeList');
+  list.innerHTML = knives.map((k, idx) => `
+    <div class="knife-item" data-id="${k.id}">
+      ${knives.length > 1 ? `<button class="remove-knife" onclick="removeKnife(${k.id})">✕</button>` : ''}
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;font-weight:600">มีดเล่มที่ ${idx + 1}</div>
+      <div class="knife-row">
+        <div class="knife-size-group">
+          ${Object.entries(CONFIG.PRICES).map(([key, v]) => `
+            <button class="size-btn ${k.size === key ? 'selected' : ''}" onclick="setSize(${k.id}, '${key}')">
+              ${v.label}<span class="price">${v.sublabel}<br>฿${v.price}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty(${k.id}, -1)">−</button>
+          <span class="qty-val">${k.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${k.id}, 1)">+</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addKnife() {
+  knives.push({ id: nextKnifeId++, size: null, qty: 1 });
+  renderKnives();
+  updatePromo();
+}
+
+function removeKnife(id) {
+  knives = knives.filter(k => k.id !== id);
+  renderKnives();
+  updatePromo();
+}
+
+function setSize(id, size) {
+  knives.find(k => k.id === id).size = size;
+  renderKnives();
+  updatePromo();
+}
+
+function changeQty(id, delta) {
+  const k = knives.find(k => k.id === id);
+  k.qty = Math.max(1, Math.min(20, k.qty + delta));
+  renderKnives();
+  updatePromo();
+}
+
+// ===== PROMO LOGIC =====
+function getTotalKnives() {
+  return knives.reduce((sum, k) => sum + k.qty, 0);
+}
+
+function calcPrice() {
+  const totalQty = getTotalKnives();
+  const promo = CONFIG.PROMO;
+  
+  if (totalQty >= promo.minQty) {
+    // โปร: ทุก 5 เล่ม = 350 บาท, เล่มที่เกินคิดตามขนาด
+    const promoSets = Math.floor(totalQty / promo.minQty);
+    const remainQty = totalQty % promo.minQty;
+    const promoTotal = promoSets * promo.promoPrice;
+    
+    // เล่มที่เกินโปร — คิดตามราคาปกติ (เรียงจากถูกสุดก่อน)
+    let remainTotal = 0;
+    if (remainQty > 0) {
+      const allPrices = [];
+      knives.forEach(k => {
+        if (k.size) {
+          for (let i = 0; i < k.qty; i++) {
+            allPrices.push(CONFIG.PRICES[k.size].price);
+          }
+        }
+      });
+      allPrices.sort((a, b) => a - b); // ถูกสุดก่อน
+      // เล่มในโปรใช้ราคาถูก, เล่มเหลือใช้ราคาแพง
+      const remainPrices = allPrices.slice(promoSets * promo.minQty);
+      remainTotal = remainPrices.reduce((s, p) => s + p, 0);
+    }
+    
+    return { total: promoTotal + remainTotal, isPromo: true, promoSets, remainQty, freeShipping: promo.freeShipping };
+  } else {
+    // ราคาปกติ
+    let total = 0;
+    knives.forEach(k => {
+      if (k.size) total += CONFIG.PRICES[k.size].price * k.qty;
+    });
+    return { total, isPromo: false, promoSets: 0, remainQty: totalQty, freeShipping: false };
+  }
+}
+
+function updatePromo() {
+  const totalQty = getTotalKnives();
+  const promo = CONFIG.PROMO;
+  const banner = document.getElementById('promoBanner');
+  const remaining = promo.minQty - (totalQty % promo.minQty || promo.minQty);
+  const isActive = totalQty >= promo.minQty;
+  const pct = Math.min(100, (totalQty / promo.minQty) * 100);
+
+  banner.classList.toggle('promo-active', isActive);
+  document.getElementById('promoBar').style.width = pct + '%';
+
+  if (isActive) {
+    const sets = Math.floor(totalQty / promo.minQty);
+    const rem = totalQty % promo.minQty;
+    let msg = `✅ ได้โปร ${sets} ชุด (${sets * promo.minQty} เล่ม = ฿${sets * promo.promoPrice}) + ส่งฟรี!`;
+    if (rem > 0) msg += `<br>อีก ${promo.minQty - rem} เล่มได้โปรชุดถัดไป`;
+    document.getElementById('promoStatus').innerHTML = msg;
+  } else {
+    document.getElementById('promoStatus').innerHTML = `เพิ่มมีดอีก <strong>${promo.minQty - totalQty}</strong> เล่มเพื่อรับโปร`;
+  }
+}
+
+// Initial render
+renderKnives();
+
+// ===== ZONE =====
+function selectZone(zone) {
+  selectedZone = zone;
+  document.getElementById('zoneA').classList.toggle('selected', zone === 'A');
+  document.getElementById('zoneB').classList.toggle('selected', zone === 'B');
+  document.getElementById('addressSection').classList.toggle('show', zone === 'B');
+}
+
+// ===== PHOTO (shrunk before sending — a raw phone photo is too big for the webhook) =====
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1000;
+        let w = img.width, h = img.height;
+        if (w > h && w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        else if (h >= w && h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        photoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+        document.getElementById('photoPreview').src = photoBase64;
+        document.getElementById('photoArea').classList.add('has-photo');
+      };
+      img.onerror = () => alert('ไม่สามารถอ่านรูปนี้ได้ กรุณาลองรูปอื่น');
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// ===== NAVIGATION =====
+function goStep(step) {
+  // Validation
+  if (step === 2 && currentStep === 1) {
+    const allSized = knives.every(k => k.size !== null);
+    if (!allSized) { alert('กรุณาเลือกขนาดมีดทุกเล่ม'); return; }
+  }
+  if (step === 3 && currentStep === 2) {
+    if (!selectedZone) { alert('กรุณาเลือกโซนบริการ'); return; }
+  }
+  if (step === 4 && currentStep === 3) {
+    if (!document.getElementById('custName').value.trim()) { alert('กรุณากรอกชื่อ'); return; }
+    if (!document.getElementById('custPhone').value.trim()) { alert('กรุณากรอกเบอร์โทร'); return; }
+    if (selectedZone === 'B' && !document.getElementById('custAddress').value.trim()) { alert('กรุณากรอกที่อยู่จัดส่ง'); return; }
+    buildSummary();
+  }
+
+  currentStep = step;
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`step${i}`).classList.toggle('visible', i === step);
+    const dot = document.getElementById(`dot${i}`);
+    dot.classList.toggle('active', i === step);
+    dot.classList.toggle('done', i < step);
+  }
+}
+
+// ===== SUMMARY =====
+function buildSummary() {
+  let html = '';
+
+  // รายการมีดแต่ละเล่ม (ราคาปกติ)
+  let normalTotal = 0;
+  knives.forEach((k, idx) => {
+    const p = CONFIG.PRICES[k.size];
+    const subtotal = p.price * k.qty;
+    normalTotal += subtotal;
+    html += `<div class="summary-row">
+      <span>มีด${p.label} (${p.sublabel}) × ${k.qty}</span>
+      <span>฿${subtotal}</span>
+    </div>`;
+  });
+
+  // คำนวณโปร
+  const pricing = calcPrice();
+  
+  if (pricing.isPromo) {
+    html += `<div class="summary-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+      <span style="color:var(--success);font-weight:700">🔥 โปร ${pricing.promoSets} ชุด (${pricing.promoSets * CONFIG.PROMO.minQty} เล่ม)</span>
+      <span style="color:var(--success)">฿${pricing.promoSets * CONFIG.PROMO.promoPrice}</span>
+    </div>`;
+    if (pricing.remainQty > 0) {
+      html += `<div class="summary-row"><span style="color:var(--text-dim)">เล่มนอกโปร × ${pricing.remainQty}</span><span>฿${pricing.total - (pricing.promoSets * CONFIG.PROMO.promoPrice)}</span></div>`;
+    }
+    if (normalTotal > pricing.total) {
+      html += `<div class="summary-row"><span style="color:var(--danger);font-size:12px">ประหยัด ฿${normalTotal - pricing.total}!</span><span style="text-decoration:line-through;color:var(--text-dim)">฿${normalTotal}</span></div>`;
+    }
+  }
+
+  html += `<div class="summary-row"><span>โซน</span><span>${selectedZone === 'A' ? 'A - รับส่งในเถิน' : 'B - ส่งทั่วประเทศ'}</span></div>`;
+  if (selectedZone === 'B' && pricing.freeShipping) {
+    html += `<div class="summary-row"><span style="color:var(--success);font-size:13px">✅ ส่งฟรี (โปร 5 เล่ม)</span><span style="color:var(--success)">฿0</span></div>`;
+  } else if (selectedZone === 'B') {
+    html += `<div class="summary-row"><span style="color:var(--text-dim);font-size:12px">* ค่าส่งคิดตามจริง แจ้งหลังประเมิน</span><span></span></div>`;
+  }
+  html += `<div class="summary-row"><span>ชื่อ</span><span>${document.getElementById('custName').value}</span></div>`;
+  html += `<div class="summary-row"><span>เบอร์โทร</span><span>${document.getElementById('custPhone').value}</span></div>`;
+  if (document.getElementById('custNote').value.trim()) {
+    html += `<div class="summary-row"><span>หมายเหตุ</span><span>${document.getElementById('custNote').value}</span></div>`;
+  }
+  html += `<div class="summary-row total"><span>รวมค่าลับมีด</span><span class="val">฿${pricing.total}</span></div>`;
+
+  document.getElementById('summaryBox').innerHTML = html;
+}
+
+// ===== SUBMIT =====
+async function submitOrder() {
+  if (CONFIG.MAKE_WEBHOOK.indexOf('http') !== 0) {
+    alert('ยังไม่ได้ตั้งค่า MAKE_WEBHOOK ในไฟล์ / MAKE_WEBHOOK is not set in the file yet');
+    return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  document.getElementById('loadingOverlay').classList.add('show');
+
+  let total = 0;
+  const knifeData = knives.map((k, idx) => {
+    const p = CONFIG.PRICES[k.size];
+    const subtotal = p.price * k.qty;
+    total += subtotal;
+    return {
+      item: idx + 1,
+      size: k.size,
+      size_label: p.label,
+      qty: k.qty,
+      unit_price: p.price,
+      subtotal: subtotal
+    };
+  });
+
+  const pricing = calcPrice();
+
+  const payload = {
+    order_id: 'RS-' + Date.now(),
+    timestamp: new Date().toISOString(),
+    line_user_id: lineProfile?.userId || 'unknown',
+    line_display_name: lineProfile?.displayName || 'Guest',
+    customer_name: document.getElementById('custName').value.trim(),
+    customer_phone: document.getElementById('custPhone').value.trim(),
+    customer_note: document.getElementById('custNote').value.trim(),
+    zone: selectedZone,
+    address: selectedZone === 'B' ? document.getElementById('custAddress').value.trim() : '',
+    knives: knifeData,
+    knives_text: knifeData.map(k => k.size_label + '×' + k.qty).join(', '),
+    total_knives: knifeData.reduce((sum, k) => sum + k.qty, 0),
+    normal_price: total,
+    total_price: pricing.total,
+    discount: total - pricing.total,
+    is_promo: pricing.isPromo,
+    promo_sets: pricing.promoSets,
+    free_shipping: pricing.freeShipping,
+    photo: photoBase64 || null
+  };
+
+  try {
+    const res = await fetch(CONFIG.MAKE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    document.getElementById('loadingOverlay').classList.remove('show');
+
+    if (res.ok) {
+      // Hide form, show success
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+      document.querySelector('.steps').style.display = 'none';
+      document.getElementById('successScreen').classList.add('show');
+      document.getElementById('successMsg').innerHTML = `
+        Order: <strong>${payload.order_id}</strong><br>
+        มีด ${payload.total_knives} เล่ม | รวม ฿${pricing.total}
+        ${pricing.isPromo ? '<br><span style="color:#47e87a">🔥 ได้โปร ' + pricing.promoSets + ' ชุด ประหยัด ฿' + payload.discount + (pricing.freeShipping ? ' + ส่งฟรี!' : '') + '</span>' : ''}
+      `;
+
+      // Show shipping card based on zone
+      const shipCard = document.getElementById('shippingCard');
+      const tlShip = document.getElementById('tlShip');
+      if (payload.zone === 'B') {
+        shipCard.style.display = 'block';
+        document.getElementById('tlShipTitle').textContent = 'ส่งมีดมาให้เรา';
+        document.getElementById('tlShipDesc').textContent = 'จัดส่งมีดมาตามที่อยู่ด้านบน (Kerry/Flash/J&T)';
+      } else {
+        // Zone A — pickup
+        shipCard.style.display = 'block';
+        shipCard.querySelector('div:first-child').innerHTML = '📍 จุดรับ-ส่งมีด (Zone A เถิน)';
+        document.getElementById('tlShipTitle').textContent = 'นำมีดมาส่งที่ร้าน / นัดรับ';
+        document.getElementById('tlShipDesc').textContent = 'นำมีดมาส่งที่ร้าน หรือนัดเวลารับ-ส่งในเถิน';
+      }
+
+      // Don't auto-close — let customer read the address and timeline
+
+    } else {
+      throw new Error('Server error');
+    }
+  } catch (err) {
+    document.getElementById('loadingOverlay').classList.remove('show');
+    alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+    btn.disabled = false;
+  }
+}
+
+// ===== COPY ADDRESS =====
+function copyAddress() {
+  const addr = 'Re-Sharp\n35 หมู่ 12 ต.ล้อมแรด\nอ.เถิน จ.ลำปาง 52160';
+  navigator.clipboard.writeText(addr).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✅ คัดลอกแล้ว!';
+    btn.style.borderColor = '#47e87a';
+    btn.style.color = '#47e87a';
+    setTimeout(() => {
+      btn.textContent = '📋 คัดลอกที่อยู่';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }, 2000);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = addr;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    document.getElementById('copyBtn').textContent = '✅ คัดลอกแล้ว!';
+  });
+}
+</script>
+</body>
+</html>
