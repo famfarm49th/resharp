@@ -557,6 +557,50 @@
   .tl-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
   .tl-desc { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
 
+  .pending-banner {
+    background: linear-gradient(135deg, rgba(232,197,71,0.18) 0%, rgba(232,197,71,0.06) 100%);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .pending-banner.show { display: block; }
+  .pending-banner .pt { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .pending-banner .pd { font-size: 13px; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px; }
+  .pending-banner .pbtns { display: flex; gap: 8px; }
+  .pending-banner button {
+    flex: 1; padding: 11px; border-radius: 8px; font-family: 'Sarabun', sans-serif;
+    font-size: 14px; font-weight: 700; cursor: pointer; border: 1px solid var(--border);
+  }
+  .pending-banner .go { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .pending-banner .no { background: transparent; color: var(--text-dim); }
+
+  .slip-box {
+    background: var(--surface); border: 1px solid var(--accent-dim);
+    border-radius: var(--radius); padding: 18px; margin: 16px 0; text-align: left;
+  }
+  .slip-box .sh { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+  .slip-box .sd { font-size: 13px; color: var(--text-dim); line-height: 1.55; margin-bottom: 14px; }
+  .slip-drop {
+    border: 2px dashed var(--border); border-radius: 10px; padding: 22px;
+    text-align: center; cursor: pointer; overflow: hidden;
+  }
+  .slip-drop.has { border-style: solid; border-color: var(--success); padding: 0; }
+  .slip-drop .si { font-size: 32px; margin-bottom: 6px; }
+  .slip-drop .sl { font-size: 14px; color: var(--text-dim); }
+  .slip-drop img { width: 100%; max-height: 260px; object-fit: contain; display: none; }
+  .slip-drop.has img { display: block; }
+  .slip-drop.has .si, .slip-drop.has .sl { display: none; }
+
+  .manual-toggle {
+    display: block; width: 100%; margin-top: 12px; padding: 10px; background: transparent;
+    border: none; color: var(--text-dim); font-family: 'Sarabun', sans-serif;
+    font-size: 13px; text-decoration: underline; cursor: pointer;
+  }
+  #manualBox { display: none; margin-top: 12px; padding-top: 14px; border-top: 1px solid var(--border); }
+  #manualBox.show { display: block; }
+
   .loc-btn {
     width: 100%;
     padding: 13px;
@@ -624,6 +668,16 @@
     <div class="step-dot" id="dot2"></div>
     <div class="step-dot" id="dot3"></div>
     <div class="step-dot" id="dot4"></div>
+  </div>
+
+  <!-- Pending order banner -->
+  <div class="pending-banner" id="pendingBanner">
+    <div class="pt" id="pendTitle"></div>
+    <div class="pd" id="pendDesc"></div>
+    <div class="pbtns">
+      <button class="go" id="pendGo" onclick="openSlipScreen()"></button>
+      <button class="no" id="pendNo" onclick="dismissPending()"></button>
+    </div>
   </div>
 
   <!-- STEP 1: Knife Selection -->
@@ -794,6 +848,51 @@
     <button onclick="if(typeof liff!=='undefined'&&liff.isInClient()){liff.closeWindow()}" style="width:100%; padding:14px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px; color:var(--text-dim); font-family:'Sarabun',sans-serif; font-size:15px; font-weight:600; cursor:pointer; margin-top:8px;" data-i18n="close">ปิดหน้านี้</button>
   </div>
 
+  <!-- SLIP SCREEN -->
+  <div class="section" id="slipScreen">
+    <div class="section-title"><span class="num">💳</span> <span id="slipTitle"></span></div>
+    <div class="slip-box">
+      <div class="sh" id="slipOrderLine"></div>
+      <div class="sd" id="slipHelp"></div>
+
+      <div class="slip-drop" id="slipDrop" onclick="document.getElementById('slipInput').click()">
+        <div class="si">🧾</div>
+        <div class="sl" id="slipDropLabel"></div>
+        <img id="slipPreview">
+      </div>
+      <input type="file" id="slipInput" accept="image/*" style="display:none" onchange="previewSlip(this)">
+
+      <button class="manual-toggle" id="manualToggle" onclick="toggleManual()"></button>
+
+      <div id="manualBox">
+        <div class="form-group">
+          <label class="form-label" id="mBankL"></label>
+          <input class="form-input" id="mBank">
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="mAmtL"></label>
+          <input class="form-input" id="mAmt" type="number" inputmode="decimal">
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="mWhenL"></label>
+          <input class="form-input" id="mWhen" type="datetime-local">
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="mRefL"></label>
+          <input class="form-input" id="mRef">
+        </div>
+      </div>
+    </div>
+    <button class="btn-submit" id="slipSubmitBtn" onclick="submitSlip()"></button>
+  </div>
+
+  <!-- SLIP DONE -->
+  <div class="success-screen" id="slipDone">
+    <div class="success-icon">🎉</div>
+    <div class="success-title" id="slipDoneTitle"></div>
+    <div class="success-msg" id="slipDoneMsg"></div>
+  </div>
+
   <div class="footer-note">Re-Sharp © 2026 | Tormek T-8 Professional Sharpening</div>
 </div>
 
@@ -809,8 +908,9 @@
 <script>
 // ===== CONFIG =====
 const CONFIG = {
-  LIFF_ID: '2011251390-mHE8RRwl',           // ← ใส่ LIFF ID ตรงนี้
-  MAKE_WEBHOOK: 'https://hook.eu1.make.com/heuuzon5v3zxziayhsbrlmq39dk4dtut',   // ← ใส่ Make.com Webhook URL ตรงนี้
+  LIFF_ID: 'YOUR_LIFF_ID_HERE',           // ← ใส่ LIFF ID ตรงนี้
+  MAKE_WEBHOOK: 'YOUR_MAKE_WEBHOOK_URL',   // ← ใส่ Make.com Webhook URL ตรงนี้
+  SLIP_WEBHOOK: 'YOUR_SLIP_WEBHOOK_URL',   // ← ใส่ Slip Webhook URL (Scenario 3)
   PRICES: {
     S: { label: 'เล็ก', label_en: 'Small', sublabel: '< 4 นิ้ว', sublabel_en: '< 4 in', price: 60 },
     M: { label: 'กลาง', label_en: 'Medium', sublabel: '4-8 นิ้ว', sublabel_en: '4-8 in', price: 80 },
@@ -865,7 +965,19 @@ const I18N = {
     locOK:'✅ บันทึกตำแหน่งแล้ว — แตะเพื่อแก้ไข',
     locHint:'ช่วยให้คนส่งหาบ้านคุณเจอง่ายขึ้น',
     locHintOK:'ดูบนแผนที่', locFail:'อ่านตำแหน่งไม่ได้ กรุณาเปิด GPS แล้วลองใหม่ หรือกรอกที่อยู่แทน',
-    aLoc:'กรุณากรอกที่อยู่ หรือแชร์ตำแหน่ง GPS'
+    aLoc:'กรุณากรอกที่อยู่ หรือแชร์ตำแหน่ง GPS',
+    pendTitle:'💳 มีออเดอร์ที่รอแนบสลิป', pendGo:'แนบสลิป', pendNo:'สั่งใหม่',
+    pendDesc:'คุณมีออเดอร์ที่ยังไม่ได้ยืนยันการชำระเงิน',
+    slipTitle:'แนบสลิปการชำระเงิน',
+    slipHelp:'ชำระเงินตาม QR ที่เราส่งให้ในแชท LINE แล้วแนบรูปสลิปที่นี่ เพื่อยืนยันการชำระเงินครับ',
+    slipDropLabel:'แตะเพื่อเลือกรูปสลิป หรือถ่ายรูป',
+    manualOpen:'ไม่มีรูปสลิป? กรอกข้อมูลแทน', manualClose:'ปิดการกรอกข้อมูล',
+    mBank:'ธนาคารที่โอน', mAmt:'จำนวนเงินที่โอน (บาท)', mWhen:'วันเวลาที่โอน', mRef:'เลขอ้างอิง (ถ้ามี)',
+    slipSubmit:'✅ ส่งหลักฐานการชำระเงิน',
+    slipDoneTitle:'ได้รับสลิปแล้ว!', slipDoneMsg:'เราจะตรวจสอบและแจ้งยืนยันทาง LINE ครับ ขอบคุณมากครับ 🙏',
+    aSlip:'กรุณาแนบรูปสลิป หรือกรอกข้อมูลการโอน',
+    aSlipManual:'กรุณากรอกธนาคารและจำนวนเงิน',
+    slipSending:'กำลังส่งสลิป...'
   },
   en: {
     tagline:'PROFESSIONAL KNIFE SHARPENING', s1:'Choose your knives', s2:'Choose service zone',
@@ -907,7 +1019,19 @@ const I18N = {
     locOK:'✅ Location saved — tap to update',
     locHint:'Helps our rider find your home',
     locHintOK:'View on map', locFail:'Could not read your location. Turn on GPS and try again, or type your address instead.',
-    aLoc:'Please enter an address or share your GPS location'
+    aLoc:'Please enter an address or share your GPS location',
+    pendTitle:'💳 You have an order awaiting payment proof', pendGo:'Attach slip', pendNo:'New order',
+    pendDesc:'This order has not been confirmed as paid yet.',
+    slipTitle:'Attach payment slip',
+    slipHelp:'Pay using the QR code we sent in your LINE chat, then attach a photo of the slip here to confirm.',
+    slipDropLabel:'Tap to choose or take a photo of your slip',
+    manualOpen:'No slip image? Enter the details instead', manualClose:'Close manual entry',
+    mBank:'Bank you paid from', mAmt:'Amount paid (THB)', mWhen:'Date and time of transfer', mRef:'Reference number (if any)',
+    slipSubmit:'✅ Send payment proof',
+    slipDoneTitle:'Slip received!', slipDoneMsg:'We will check it and confirm on LINE. Thank you 🙏',
+    aSlip:'Please attach a slip image or fill in the transfer details',
+    aSlipManual:'Please enter the bank and the amount',
+    slipSending:'Sending your slip...'
   }
 };
 
@@ -931,7 +1055,155 @@ function setLang(l) {
   renderKnives();
   updatePromo();
   if (selectedZone) refreshAddressUI();
+  showPendingBanner();
+  if (document.getElementById('slipScreen')) renderSlipText();
   if (currentStep === 4) buildSummary();
+}
+
+const PEND_KEY = 'rs_pending';
+const PEND_DAYS = 7;
+
+function loadPending() {
+  try {
+    const raw = localStorage.getItem(PEND_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (!p || !p.order_id) return null;
+    if ((Date.now() - (p.ts || 0)) > PEND_DAYS * 86400000) {
+      localStorage.removeItem(PEND_KEY);
+      return null;
+    }
+    return p;
+  } catch (e) { return null; }
+}
+
+function savePending(orderId, total) {
+  try {
+    localStorage.setItem(PEND_KEY, JSON.stringify({ order_id: orderId, total: total, ts: Date.now() }));
+  } catch (e) {}
+}
+
+function clearPending() {
+  try { localStorage.removeItem(PEND_KEY); } catch (e) {}
+  pending = null;
+}
+
+function showPendingBanner() {
+  pending = loadPending();
+  const b = document.getElementById('pendingBanner');
+  if (!pending) { b.classList.remove('show'); return; }
+  document.getElementById('pendTitle').textContent = t('pendTitle');
+  document.getElementById('pendDesc').textContent =
+    t('pendDesc') + '  ' + pending.order_id + ' — ฿' + pending.total;
+  document.getElementById('pendGo').textContent = t('pendGo');
+  document.getElementById('pendNo').textContent = t('pendNo');
+  b.classList.add('show');
+}
+
+function dismissPending() {
+  document.getElementById('pendingBanner').classList.remove('show');
+}
+
+function openSlipScreen() {
+  if (!pending) return;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.querySelector('.steps').style.display = 'none';
+  document.getElementById('pendingBanner').classList.remove('show');
+  document.getElementById('slipScreen').classList.add('visible');
+  renderSlipText();
+}
+
+function renderSlipText() {
+  document.getElementById('slipTitle').textContent = t('slipTitle');
+  document.getElementById('slipOrderLine').textContent =
+    (pending ? pending.order_id + ' — ฿' + pending.total : '');
+  document.getElementById('slipHelp').textContent = t('slipHelp');
+  document.getElementById('slipDropLabel').textContent = t('slipDropLabel');
+  document.getElementById('manualToggle').textContent =
+    document.getElementById('manualBox').classList.contains('show') ? t('manualClose') : t('manualOpen');
+  document.getElementById('mBankL').textContent = t('mBank');
+  document.getElementById('mAmtL').textContent = t('mAmt');
+  document.getElementById('mWhenL').textContent = t('mWhen');
+  document.getElementById('mRefL').textContent = t('mRef');
+  document.getElementById('slipSubmitBtn').textContent = t('slipSubmit');
+  document.getElementById('slipDoneTitle').textContent = t('slipDoneTitle');
+  document.getElementById('slipDoneMsg').textContent = t('slipDoneMsg');
+}
+
+function toggleManual() {
+  const box = document.getElementById('manualBox');
+  box.classList.toggle('show');
+  document.getElementById('manualToggle').textContent =
+    box.classList.contains('show') ? t('manualClose') : t('manualOpen');
+}
+
+function previewSlip(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1200;
+      let w = img.width, h = img.height;
+      if (w > h && w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      else if (h >= w && h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      slipBase64 = c.toDataURL('image/jpeg', 0.8);
+      document.getElementById('slipPreview').src = slipBase64;
+      document.getElementById('slipDrop').classList.add('has');
+    };
+    img.onerror = () => alert(t('aPhoto'));
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+async function submitSlip() {
+  if (!pending) return;
+  const manualOpen = document.getElementById('manualBox').classList.contains('show');
+  const bank = document.getElementById('mBank').value.trim();
+  const amt  = document.getElementById('mAmt').value.trim();
+
+  if (!slipBase64 && !manualOpen) { alert(t('aSlip')); return; }
+  if (!slipBase64 && manualOpen && (!bank || !amt)) { alert(t('aSlipManual')); return; }
+
+  const btn = document.getElementById('slipSubmitBtn');
+  btn.disabled = true;
+  document.querySelector('.loading-text').textContent = t('slipSending');
+  document.getElementById('loadingOverlay').classList.add('show');
+
+  const payload = {
+    order_id: pending.order_id,
+    expected_total: pending.total,
+    line_user_id: lineProfile ? lineProfile.userId : '',
+    lang: lang,
+    has_image: slipBase64 ? true : false,
+    slip: slipBase64 || '',
+    manual_bank: bank,
+    manual_amount: amt,
+    manual_when: document.getElementById('mWhen').value,
+    manual_ref: document.getElementById('mRef').value.trim(),
+    submitted_at: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch(CONFIG.SLIP_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    document.getElementById('loadingOverlay').classList.remove('show');
+    if (!res.ok) throw new Error('server');
+    clearPending();
+    document.getElementById('slipScreen').classList.remove('visible');
+    document.getElementById('slipDone').classList.add('show');
+  } catch (err) {
+    document.getElementById('loadingOverlay').classList.remove('show');
+    alert(t('aErr'));
+    btn.disabled = false;
+  }
 }
 
 function detectLang() {
@@ -953,6 +1225,8 @@ let currentStep = 1;
 let selectedZone = null;
 let photoBase64 = null;
 let gpsLat = null;
+let slipBase64 = null;
+let pending = null;
 let gpsLng = null;
 let lineProfile = null;
 let knives = [{ id: 1, size: null, qty: 1 }];
@@ -1312,6 +1586,7 @@ async function submitOrder() {
     document.getElementById('loadingOverlay').classList.remove('show');
 
     if (res.ok) {
+      savePending(payload.order_id, pricing.total);
       // Hide form, show success
       document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
       document.querySelector('.steps').style.display = 'none';
