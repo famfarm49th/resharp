@@ -557,6 +557,26 @@
   .tl-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
   .tl-desc { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
 
+  .loc-btn {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid var(--accent-dim);
+    border-radius: 8px;
+    background: var(--accent-glow);
+    color: var(--accent);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .loc-btn.done { border-color: var(--success); color: var(--success); background: rgba(71,232,122,0.08); }
+  .loc-btn:disabled { opacity: 0.6; }
+  .loc-hint { font-size: 12px; color: var(--text-dim); margin-top: 6px; text-align: center; }
+  .loc-hint a { color: var(--accent); }
+  #locWrap { display: none; margin-top: 12px; }
+  #locWrap.show { display: block; }
+
   .lang-toggle {
     position: absolute;
     top: 18px;
@@ -677,8 +697,12 @@
 
     <div class="address-section" id="addressSection">
       <div class="form-group">
-        <label class="form-label" data-i18n="fAddr">ที่อยู่จัดส่ง (Zone B)</label>
+        <label class="form-label" id="addrLabel">ที่อยู่จัดส่ง (Zone B)</label>
         <textarea class="form-input" id="custAddress" rows="3" data-i18n-ph="phAddr" placeholder="บ้านเลขที่ ซอย ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์" style="resize:none"></textarea>
+      </div>
+      <div id="locWrap">
+        <button type="button" class="loc-btn" id="locBtn" onclick="shareLocation()"></button>
+        <div class="loc-hint" id="locHint"></div>
       </div>
     </div>
 
@@ -785,8 +809,8 @@
 <script>
 // ===== CONFIG =====
 const CONFIG = {
-  LIFF_ID: '2011251390-mHE8RRwl',           // ← ใส่ LIFF ID ตรงนี้
-  MAKE_WEBHOOK: 'https://hook.eu1.make.com/heuuzon5v3zxziayhsbrlmq39dk4dtut',   // ← ใส่ Make.com Webhook URL ตรงนี้
+  LIFF_ID: 'YOUR_LIFF_ID_HERE',           // ← ใส่ LIFF ID ตรงนี้
+  MAKE_WEBHOOK: 'YOUR_MAKE_WEBHOOK_URL',   // ← ใส่ Make.com Webhook URL ตรงนี้
   PRICES: {
     S: { label: 'เล็ก', label_en: 'Small', sublabel: '< 4 นิ้ว', sublabel_en: '< 4 in', price: 60 },
     M: { label: 'กลาง', label_en: 'Medium', sublabel: '4-8 นิ้ว', sublabel_en: '4-8 in', price: 80 },
@@ -834,7 +858,14 @@ const I18N = {
     knifeWord:'มีด', totalWord:'รวม',
     aSize:'กรุณาเลือกขนาดมีดทุกเล่ม', aZone:'กรุณาเลือกโซนบริการ',
     aName:'กรุณากรอกชื่อ', aPhone:'กรุณากรอกเบอร์โทร', aAddr:'กรุณากรอกที่อยู่จัดส่ง',
-    aPhoto:'ไม่สามารถอ่านรูปนี้ได้ กรุณาลองรูปอื่น', aErr:'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'
+    aPhoto:'ไม่สามารถอ่านรูปนี้ได้ กรุณาลองรูปอื่น', aErr:'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
+    fAddrA:'ที่อยู่สำหรับรับ-ส่งมีด', fAddrB:'ที่อยู่จัดส่ง (Zone B)',
+    phAddrA:'บ้านเลขที่ ซอย ถนน ตำบล อ.เถิน จ.ลำปาง',
+    shareLoc:'📍 แชร์ตำแหน่ง GPS', locWait:'⏳ กำลังอ่านตำแหน่ง...',
+    locOK:'✅ บันทึกตำแหน่งแล้ว — แตะเพื่อแก้ไข',
+    locHint:'ช่วยให้คนส่งหาบ้านคุณเจอง่ายขึ้น',
+    locHintOK:'ดูบนแผนที่', locFail:'อ่านตำแหน่งไม่ได้ กรุณาเปิด GPS แล้วลองใหม่ หรือกรอกที่อยู่แทน',
+    aLoc:'กรุณากรอกที่อยู่ หรือแชร์ตำแหน่ง GPS'
   },
   en: {
     tagline:'PROFESSIONAL KNIFE SHARPENING', s1:'Choose your knives', s2:'Choose service zone',
@@ -869,7 +900,14 @@ const I18N = {
     aName:'Please enter your name', aPhone:'Please enter your phone number',
     aAddr:'Please enter your shipping address',
     aPhoto:'Could not read that image. Please try another one.',
-    aErr:'Something went wrong. Please try again.'
+    aErr:'Something went wrong. Please try again.',
+    fAddrA:'Pickup address', fAddrB:'Shipping address (Zone B)',
+    phAddrA:'House no., street, sub-district, Thoen, Lampang',
+    shareLoc:'📍 Share GPS location', locWait:'⏳ Getting your location...',
+    locOK:'✅ Location saved — tap to update',
+    locHint:'Helps our rider find your home',
+    locHintOK:'View on map', locFail:'Could not read your location. Turn on GPS and try again, or type your address instead.',
+    aLoc:'Please enter an address or share your GPS location'
   }
 };
 
@@ -892,6 +930,7 @@ function setLang(l) {
   });
   renderKnives();
   updatePromo();
+  if (selectedZone) refreshAddressUI();
   if (currentStep === 4) buildSummary();
 }
 
@@ -913,6 +952,8 @@ function detectLang() {
 let currentStep = 1;
 let selectedZone = null;
 let photoBase64 = null;
+let gpsLat = null;
+let gpsLng = null;
 let lineProfile = null;
 let knives = [{ id: 1, size: null, qty: 1 }];
 let nextKnifeId = 2;
@@ -1055,7 +1096,56 @@ function selectZone(zone) {
   selectedZone = zone;
   document.getElementById('zoneA').classList.toggle('selected', zone === 'A');
   document.getElementById('zoneB').classList.toggle('selected', zone === 'B');
-  document.getElementById('addressSection').classList.toggle('show', zone === 'B');
+  document.getElementById('addressSection').classList.add('show');   // both zones now
+  refreshAddressUI();
+}
+
+function refreshAddressUI() {
+  const isA = selectedZone === 'A';
+  const lbl = document.getElementById('addrLabel');
+  const box = document.getElementById('custAddress');
+  if (lbl) lbl.textContent = t(isA ? 'fAddrA' : 'fAddrB');
+  if (box) box.placeholder = isA ? t('phAddrA') : t('phAddr');
+  document.getElementById('locWrap').classList.toggle('show', isA);
+  renderLocBtn();
+}
+
+function renderLocBtn() {
+  const btn = document.getElementById('locBtn');
+  const hint = document.getElementById('locHint');
+  if (!btn) return;
+  if (gpsLat && gpsLng) {
+    btn.textContent = t('locOK');
+    btn.classList.add('done');
+    hint.innerHTML = '<a href="https://www.google.com/maps?q=' + gpsLat + ',' + gpsLng +
+                     '" target="_blank" rel="noopener">' + t('locHintOK') + '</a>';
+  } else {
+    btn.textContent = t('shareLoc');
+    btn.classList.remove('done');
+    hint.textContent = t('locHint');
+  }
+}
+
+function shareLocation() {
+  const btn = document.getElementById('locBtn');
+  if (!navigator.geolocation) { alert(t('locFail')); return; }
+  btn.disabled = true;
+  btn.textContent = t('locWait');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      gpsLat = Number(pos.coords.latitude.toFixed(6));
+      gpsLng = Number(pos.coords.longitude.toFixed(6));
+      btn.disabled = false;
+      renderLocBtn();
+    },
+    () => {
+      btn.disabled = false;
+      gpsLat = null; gpsLng = null;
+      renderLocBtn();
+      alert(t('locFail'));
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
 }
 
 // ===== PHOTO (shrunk before sending — a raw phone photo is too big for the webhook) =====
@@ -1096,7 +1186,9 @@ function goStep(step) {
   if (step === 4 && currentStep === 3) {
     if (!document.getElementById('custName').value.trim()) { alert(t('aName')); return; }
     if (!document.getElementById('custPhone').value.trim()) { alert(t('aPhone')); return; }
-    if (selectedZone === 'B' && !document.getElementById('custAddress').value.trim()) { alert(t('aAddr')); return; }
+    const addrVal = document.getElementById('custAddress').value.trim();
+    if (selectedZone === 'B' && !addrVal) { alert(t('aAddr')); return; }
+    if (selectedZone === 'A' && !addrVal && !gpsLat) { alert(t('aLoc')); return; }
     buildSummary();
   }
 
@@ -1193,7 +1285,10 @@ async function submitOrder() {
     customer_phone: document.getElementById('custPhone').value.trim(),
     customer_note: document.getElementById('custNote').value.trim(),
     zone: selectedZone,
-    address: selectedZone === 'B' ? document.getElementById('custAddress').value.trim() : '',
+    address: document.getElementById('custAddress').value.trim(),
+    lat: gpsLat || '',
+    lng: gpsLng || '',
+    map_link: (gpsLat && gpsLng) ? ('https://www.google.com/maps?q=' + gpsLat + ',' + gpsLng) : '',
     knives: knifeData,
     knives_text: knifeData.map(k => k.size_label + '×' + k.qty).join(', '),
     total_knives: knifeData.reduce((sum, k) => sum + k.qty, 0),
